@@ -5,6 +5,15 @@
 #include <stdlib.h>
 
 /**
+ * @brief Concatenation macros
+ */
+#define _CONCATENATE3(a,b,c) a ## b ## c // generates abc
+#define CONCATENATE3(a,b,c) _CONCATENATE3(a,b,c) // expands args a, b, c
+#define PREFIX_WITH_UNDERSCORE(a,b) _CONCATENATE3(_,a,b) // generates _ab
+#define JOIN_WITH_UNDERSCORE(a,b) _CONCATENATE3(a,_,b) // generates a_b
+#define BLOCK_NAME(name) PREFIX_WITH_UNDERSCORE(name,block)
+
+/**
  * @brief Closure type macro
  *
  * Used for declaring variables, e.g. CLOSURE(my_closure) mc;
@@ -28,15 +37,16 @@
 #define CALL_LOCAL_CLOSURE(closure, args...) closure.block(closure.env, args)
 
 /**
- * @brief
+ * @brief Declares the closure block and defines the closure struct.
  *
- * detailed description.
+ * Detailed description.
  *
  * @param return_type
  * @param closure_name
  * @param args
  */
 #define DEFINE_CLOSURE_TYPE(return_type, closure_name, args...) \
+return_type BLOCK_NAME(closure_name)(void **env, args); \
 struct closure_name \
 { \
     size_t num_args; \
@@ -45,50 +55,24 @@ struct closure_name \
 }
 
 /**
- * @brief
+ * @brief Defines a function returning a closure
  *
  * detailed description.
  *
- * @param block_name
- * @param const_name
+ * @param closure_name
  * @param param0
  */
-#define DEFINE_CLOSURE_CONSTRUCTOR_1(block_name, const_name, param0) \
-CLOSURE(const_name) const_name(param0 arg0) \
+#define DEFINE_CLOSURE_CONSTRUCTOR_1(closure_name, param0) \
+CLOSURE(closure_name) closure_name(param0 arg0) \
 { \
-    CLOSURE(const_name) c; \
+    CLOSURE(closure_name) c; \
     /* Create environment and capture arguments */ \
     c.num_args = 1; \
     c.env = malloc(sizeof(void *) * 1); \
     c.env[0] = malloc(sizeof(arg0)); \
     memcpy(c.env[0], &arg0, sizeof(arg0)); \
     /* Set function block */ \
-    c.block = block_name; \
-    return c; \
-}
-
-/**
- * @brief
- *
- * detailed description.
- *
- * @param block_name
- * @param const_name
- * @param param0
- */
-#define DEFINE_CLOSURE_CONSTRUCTOR_2(block_name, const_name, param0, param1) \
-CLOSURE(const_name) const_name(param0 arg0, param1 arg1) \
-{ \
-    CLOSURE(const_name) c; \
-    /* Create environment and capture arguments */ \
-    c.num_args = 2; \
-    c.env = malloc(sizeof(void *) * 2); \
-    c.env[0] = malloc(sizeof(arg0)); \
-    memcpy(c.env[0], &arg0, sizeof(arg0)); \
-    c.env[1] = malloc(sizeof(arg1)); \
-    memcpy(c.env[1], &arg1, sizeof(arg1)); \
-    /* Set function block */ \
-    c.block = block_name; \
+    c.block = BLOCK_NAME(closure_name); \
     return c; \
 }
 
@@ -105,7 +89,7 @@ free(c.env)
 
 /**
  * @brief Free resources allocated for a closure
- * @param c  closure to free
+ * @param c  pointer to closure to free
  */
 #define FREE_CLOSURE(c) \
 for (size_t i = 0; i < c->num_args; i++) \
@@ -120,14 +104,14 @@ free(c->env)
  * detailed description.
  *
  * @param return_type
- * @param block_name
+ * @param closure_name  name of closure type this block belongs to
  * @param args
  */
-#define CLOSURE_BLOCK(return_type, block_name, args...) \
-    return_type block_name(void **env, args)
+#define DEFINE_CLOSURE_BLOCK(return_type, closure_name, args...) \
+    return_type BLOCK_NAME(closure_name)(void **env, args)
 
 /**
- * @brief Macros for accesing captured arguments
+ * @brief Macros for accessing captured arguments in environment
  */
 #define ENV_ARG_0(type, name) type name = *(type *)(env[0])
 #define ENV_ARG_1(type, name) type name = *(type *)(env[1])

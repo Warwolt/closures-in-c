@@ -1421,23 +1421,16 @@ extern int getloadavg(double __loadavg[], int __nelem)
 # 6 "closure.h" 2
 # 7 "main.c" 2
 
-# 8 "main.c"
-void closure_client(struct add *c);
-
+# 9 "main.c"
+int add_block(void **env, int);
 struct add
 {
      size_t num_args;
      void **env;
      int (*block)(void **env, int);
 };
-struct add3
-{
-     size_t num_args;
-     void **env;
-     int (*block)(void **env, int);
-};
-int add_block(void **env, int b);
-int add3_block(void **env, int c);
+
+void closure_client(struct add *c);
 
 struct add add(int arg0)
 {
@@ -1455,25 +1448,6 @@ int add_block(void **env, int b)
      return a + b;
 }
 
-struct add3 add3(int arg0, int arg1)
-{
-     struct add3 c;
-     c.num_args = 2;
-     c.env = malloc(sizeof(void *) * 2);
-     c.env[0] = malloc(sizeof(arg0));
-     memcpy(c.env[0], &arg0, sizeof(arg0));
-     c.env[1] = malloc(sizeof(arg1));
-     memcpy(c.env[1], &arg1, sizeof(arg1));
-     c.block = add3_block;
-     return c;
-};
-int add3_block(void **env, int c)
-{
-     int a = *(int *)(env[0]);
-     int b = *(int *)(env[1]);
-     return a + b + c;
-}
-
 int main()
 {
      struct add c = add(5);
@@ -1484,4 +1458,9 @@ int main()
 void closure_client(struct add *c)
 {
      printf("c(10) = %d\n", c->block(c->env, 10));
+     for (size_t i = 0; i < c->num_args; i++)
+     {
+          free(c->env[i]);
+     }
+     free(c->env);
 }
