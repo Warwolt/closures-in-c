@@ -29,7 +29,7 @@ copying them onto the heap, and assigns them to a closure struct along with
 the block function, and then returns the instantiated closure to the caller.
 
 ## Defining and using a closure with closure.h
-A closure type is defined with this header using the `DEFINE_CLOSURE_TYPE()`
+A closure type is defined with `closure.h` using the `DEFINE_CLOSURE_TYPE()`
 macro, that creates the block type (a function signature) and the struct
 that stores the block and the environment.
 
@@ -43,14 +43,14 @@ can be accessed in the function body using the `ENV_ARG()` macro.
 
 Instantiated closures are stored in variables of type `CLOSURE(name)`, and
 can be called using the `CALL_CLOSURE()` macro. When a closure instance is no
-longer in use, it should be claned up with the `FREE_CLOSURE()` macro.
+longer in use, it should be cleaned up with the `FREE_CLOSURE()` macro.
 
 ## Shallow copies
 The way that the macro works is to copy the arguments received onto the heap,
 but if the captured argument is a pointer to some data structure, the capture
 process won't know about that structure and thus cannot perform a deep copy.
 
-Closures defined with this header therefore _only_ perform shallow copies.
+Closures defined with `closure.h` therefore _only_ perform shallow copies.
 
 ## Example usage
 ```C
