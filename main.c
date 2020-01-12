@@ -17,19 +17,17 @@
 DEFINE_CLOSURE_TYPE(int, add, int);
 
 /* Function definitions */
-DEFINE_CLOSURE_ENVIRONMENT_3(add, int, int, int);
-DEFINE_CLOSURE_BLOCK(int, add, int d)
+DEFINE_CLOSURE_ENVIRONMENT_1(add, int);
+DEFINE_CLOSURE_BLOCK(int, add, int b)
 {
     ENV_ARG(0, int, a);
-    ENV_ARG(1, int, b);
-    ENV_ARG(2, int, c);
-    return a + b + c + d;
+    return a + b;
 }
 
 int main()
 {
-    CLOSURE(add) c = add(1, 5, 10);
-    printf("c(15) = %d\n", CALL_LOCAL_CLOSURE(c, 15));
+    CLOSURE(add) c = add(5);
+    printf("c(10) = %d\n", CALL_LOCAL_CLOSURE(c, 10));
     FREE_LOCAL_CLOSURE(c);
     return 0;
 }
