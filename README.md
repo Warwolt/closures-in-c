@@ -45,6 +45,13 @@ Instantiated closures are stored in variables of type `CLOSURE(name)`, and
 can be called using the `CALL_CLOSURE()` macro. When a closure instance is no
 longer in use, it should be claned up with the `FREE_CLOSURE()` macro.
 
+## Shallow copies
+The way that the macro works is to copy the arguments received onto the heap,
+but if the captured argument is a pointer to some data structure, the capture
+process won't know about that structure and thus cannot perform a deep copy.
+
+Closures defined with this header therefore _only_ perform shallow copies.
+
 ## Example usage
 ```C
 #include <stdio.h>

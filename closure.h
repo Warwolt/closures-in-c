@@ -4,23 +4,10 @@
  * @brief:  Header for defining and using closures in C.
  *
  * See README.md for instructions on how to use this file.
- * Example usage:
- *
- * DEFINE_CLOSURE_TYPE(int, add, int);
- * DEFINE_CLOSURE_ENVIRONMENT_1(add, int);
- * DEFINE_CLOSURE_BLOCK(int, add, int b)
- * {
- *     ENV_ARG(0, int, a);
- *     return a + b;
- * }
- *
- * int main()
- * {
- *     CLOSURE(add) c = add(5);
- *     printf("c(10) = %d\n", CALL_LOCAL_CLOSURE(c, 10));
- *     FREE_LOCAL_CLOSURE(c);
- *     return 0;
- * }
+
+ * Macros that are 'private' to this header are prefixed with double
+ * underscores to minimize risk of name collisions with macros in other
+ * headers.
  */
 
 #ifndef CLOSURE_H
@@ -28,16 +15,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-
-
-/* Concatenation macros ------------------------------------------------------*/
-/* Concatenate */
-#define _CONCATENATE(a,b) a ## b // generates ab
-#define CONCATENATE(a,b) _CONCATENATE(a,b) // expands args a, b
-/* Concatenate 3 */
-#define _CONCATENATE3(a,b,c) a ## b ## c // generates abc
-#define CONCATENATE3(a,b,c) _CONCATENATE3(a,b,c) // expands args a, b, c
-
+#include "concatm.h"
 
 /* Closure definition macros -------------------------------------------------*/
 /**
@@ -62,7 +40,7 @@
  *
  * @param closure_name  Name of the closure to associate the block with
  */
-#define BLOCK(closure_name) CONCATENATE3(_,closure_name,_block)
+#define __BLOCK(closure_name) CONCATENATE3(_,closure_name,_block)
 
 /**
  * @brief Defines a closure type
@@ -83,7 +61,7 @@
  * @param params        Comma separated list of parameters for closure
  */
 #define DEFINE_CLOSURE_TYPE(return_type, closure_name, params...) \
-return_type BLOCK(closure_name)(void **env, params); \
+return_type __BLOCK(closure_name)(void **env, params); \
 CLOSURE(closure_name) \
 { \
     size_t num_params; \
@@ -99,7 +77,7 @@ CLOSURE(closure_name) \
  *
  * @param capacity  Number of arguments that should be capturable
  */
-#define CREATE_ENVIRONMENT(capacity) \
+#define __CREATE_ENVIRONMENT(capacity) \
 c.num_params = capacity; \
 c.env = malloc(sizeof(void *) * c.num_params)
 
@@ -113,7 +91,7 @@ c.env = malloc(sizeof(void *) * c.num_params)
  * @param num  Which N:th argument to capture
  * @param arg  Argument to capture by copying onto the heap
  */
-#define CAPTURE_ARGUMENT(num, arg) \
+#define __CAPTURE_ARGUMENT(num, arg) \
 c.env[num] = malloc(sizeof(arg)); \
 memcpy(c.env[num], &arg, sizeof(arg))
 
@@ -134,15 +112,19 @@ CLOSURE(closure_name) closure_name(param0 arg0) \
     /* Instantiate closure struct */ \
     CLOSURE(closure_name) c; \
     /* Create environment and capture arguments */ \
-    CREATE_ENVIRONMENT(1); \
-    CAPTURE_ARGUMENT(0, arg0); \
+    __CREATE_ENVIRONMENT(1); \
+    __CAPTURE_ARGUMENT(0, arg0); \
     /* Set callback function then return closure */ \
-    c.block = BLOCK(closure_name); \
+    c.block = __BLOCK(closure_name); \
     return c; \
 }
 
 /**
  * @brief 2 argument version of DEFINE_CLOSURE_ENVIRONMENT_1()
+ *
+ * @param closure_name  Name used to refer to the closure type
+ * @param param0        Type name of 1:th argument to capture
+ * @param param1        Type name of 2:nd argument to capture
  */
 #define DEFINE_CLOSURE_ENVIRONMENT_2(closure_name, param0, param1) \
 CLOSURE(closure_name) closure_name(param0 arg0, param1 arg1) \
@@ -150,16 +132,21 @@ CLOSURE(closure_name) closure_name(param0 arg0, param1 arg1) \
     /* Instantiate closure struct */ \
     CLOSURE(closure_name) c; \
     /* Create environment and capture arguments */ \
-    CREATE_ENVIRONMENT(2); \
-    CAPTURE_ARGUMENT(0, arg0); \
-    CAPTURE_ARGUMENT(1, arg1); \
+    __CREATE_ENVIRONMENT(2); \
+    __CAPTURE_ARGUMENT(0, arg0); \
+    __CAPTURE_ARGUMENT(1, arg1); \
     /* Set callback function then return closure */ \
-    c.block = BLOCK(closure_name); \
+    c.block = __BLOCK(closure_name); \
     return c; \
 }
 
 /**
  * @brief 3 argument version of DEFINE_CLOSURE_ENVIRONMENT_1()
+ *
+ * @param closure_name  Name used to refer to the closure type
+ * @param param0        Type name of 1:th argument to capture
+ * @param param1        Type name of 2:nd argument to capture
+ * @param param2        Type name of 3:rd argument to capture
  */
 #define DEFINE_CLOSURE_ENVIRONMENT_3(closure_name, param0, param1, param2) \
 CLOSURE(closure_name) closure_name(param0 arg0, param1 arg1, param2 arg2) \
@@ -167,12 +154,12 @@ CLOSURE(closure_name) closure_name(param0 arg0, param1 arg1, param2 arg2) \
     /* Instantiate closure struct */ \
     CLOSURE(closure_name) c; \
     /* Create environment and capture arguments */ \
-    CREATE_ENVIRONMENT(3); \
-    CAPTURE_ARGUMENT(0, arg0); \
-    CAPTURE_ARGUMENT(1, arg1); \
-    CAPTURE_ARGUMENT(2, arg2); \
+    __CREATE_ENVIRONMENT(3); \
+    __CAPTURE_ARGUMENT(0, arg0); \
+    __CAPTURE_ARGUMENT(1, arg1); \
+    __CAPTURE_ARGUMENT(2, arg2); \
     /* Set callback function then return closure */ \
-    c.block = BLOCK(closure_name); \
+    c.block = __BLOCK(closure_name); \
     return c; \
 }
 
@@ -188,7 +175,7 @@ CLOSURE(closure_name) closure_name(param0 arg0, param1 arg1, param2 arg2) \
  * @param params        Parameter list for the block
  */
 #define DEFINE_CLOSURE_BLOCK(return_type, closure_name, params...) \
-    return_type BLOCK(closure_name)(void **env, params)
+    return_type __BLOCK(closure_name)(void **env, params)
 
 /**
  * @brief Macro for accessing captured arguments in closure environment
